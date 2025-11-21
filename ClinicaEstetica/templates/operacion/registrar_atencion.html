@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block titulo %}Nueva Atención{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <h2 class="mb-4">Registrar Atención y Consumo</h2>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- SECCIÓN 1: DATOS DEL SERVICIO -->
+            <div class="card mb-4 border-primary">
+                <div class="card-header bg-primary text-white">Datos de la Atención</div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Cliente:</label>
+                            {{ form_atencion.cliente }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Servicio Realizado:</label>
+                            {{ form_atencion.servicio }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 2: PRODUCTOS CONSUMIDOS -->
+            <div class="card mb-4 border-info">
+                <div class="card-header bg-info text-white">Productos Utilizados (Descuento de Stock)</div>
+                <div class="card-body">
+                    {{ formset_detalles.management_form }}
+                    
+                    <table class="table table-bordered" id="productos-table">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Cantidad</th>
+                                <th>Eliminar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for form in formset_detalles %}
+                                <tr class="producto-form">
+                                    <td>{{ form.producto }}</td>
+                                    <td>{{ form.cantidad }}</td>
+                                    <td>
+                                        {% if formset_detalles.can_delete %}
+                                            {{ form.DELETE }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-success btn-lg">Finalizar y Calcular Total</button>
+                <a href="{% url 'home' %}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

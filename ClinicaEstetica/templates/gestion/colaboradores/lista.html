@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block contenido %}
+<h2>Gestión de Colaboradores <a href="{% url 'crear_colaborador' %}" class="btn btn-success float-end">+ Nuevo</a></h2>
+<table class="table table-striped mt-3">
+    <thead><tr><th>Nombre</th><th>Cargo</th><th>Teléfono</th><th>Sueldo</th><th>Acciones</th></tr></thead>
+    <tbody>
+        {% for c in colaboradores %}
+        <tr>
+            <td>{{ c.nombre }}</td>
+            <td>{{ c.get_cargo_display }}</td>
+            <td>{{ c.telefono }}</td>
+            <td>${{ c.sueldo }}</td>
+            <td>
+                <a href="{% url 'editar_colaborador' c.id %}" class="btn btn-sm btn-warning">Editar</a>
+                <a href="{% url 'eliminar_colaborador' c.id %}" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro?')">Eliminar</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{% url 'panel_gestion' %}" class="btn btn-outline-secondary mt-3">Volver al Panel</a>
+{% endblock %}

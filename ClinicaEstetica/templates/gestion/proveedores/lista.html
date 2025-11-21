@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block contenido %}
+<h2>Gestión de Proveedores <a href="{% url 'crear_proveedor' %}" class="btn btn-success float-end">+ Nuevo</a></h2>
+<table class="table table-striped mt-3">
+    <thead><tr><th>Empresa</th><th>Contacto</th><th>Teléfono</th><th>Suministra</th><th>Acciones</th></tr></thead>
+    <tbody>
+        {% for p in proveedores %}
+        <tr>
+            <td>{{ p.nombre_empresa }}</td>
+            <td>{{ p.contacto_nombre }}</td>
+            <td>{{ p.telefono }}</td>
+            <td>{{ p.productos_suministrados|truncatechars:30 }}</td>
+            <td>
+                <a href="{% url 'editar_proveedor' p.id %}" class="btn btn-sm btn-warning">Editar</a>
+                <a href="{% url 'eliminar_proveedor' p.id %}" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro?')">Eliminar</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{% url 'panel_gestion' %}" class="btn btn-outline-secondary mt-3">Volver al Panel</a>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block contenido %}
+<h1>Panel de Administración</h1>
+
+<!-- Solo el ADMIN ve el botón de stock crítico -->
+{% if user.is_staff %}
+<div class="mb-4 text-end">
+    <a href="{% url 'reporte_stock_critico' %}" class="btn btn-danger btn-lg">
+        ⚠️ Ver Productos con Stock Crítico
+    </a>
+</div>
+{% endif %}
+
+<div class="row mt-2">
+    <!-- PRODUCTOS: Solo Admin -->
+    {% if user.is_staff %}
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h3>Inventario de Productos</h3>
+                <p>Gestionar stock, precios e imágenes.</p>
+                <div class="d-grid gap-2 d-md-block">
+                    <a href="{% url 'listar_productos' %}" class="btn btn-primary">Ir a Productos</a>
+                    <a href="{% url 'reporte_stock_critico' %}" class="btn btn-outline-danger">Ver Faltantes</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- CLIENTES: Admin y Recepcionista -->
+    <div class="col-md-6">
+        <div class="card border-success">
+            <div class="card-body">
+                <h3>Base de Clientes</h3>
+                <p>Registrar y editar información de clientes.</p>
+                <a href="{% url 'listar_clientes' %}" class="btn btn-success text-white">Ir a Clientes</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- RRHH Y PROVEEDORES: Solo Admin -->
+{% if user.is_staff %}
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card border-info">
+            <div class="card-body">
+                <h3>Colaboradores (RRHH)</h3>
+                <p>Gestionar estilistas, recepcionistas y sueldos.</p>
+                <a href="{% url 'listar_colaboradores' %}" class="btn btn-info text-white">Ir a Colaboradores</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-warning">
+            <div class="card-body">
+                <h3>Proveedores</h3>
+                <p>Agenda de contactos para reposición.</p>
+                <a href="{% url 'listar_proveedores' %}" class="btn btn-warning text-dark">Ir a Proveedores</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

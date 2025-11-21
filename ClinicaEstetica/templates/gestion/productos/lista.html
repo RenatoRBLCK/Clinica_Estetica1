@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block contenido %}
+<h2>Inventario de Productos 
+    <a href="{% url 'crear_producto' %}" class="btn btn-success float-end ms-2">+ Nuevo</a>
+    <a href="{% url 'reporte_stock_critico' %}" class="btn btn-danger float-end">Ver Críticos</a>
+</h2>
+<table class="table table-striped mt-3">
+    <thead>
+        <tr>
+            <th>Imagen</th>
+            <th>Nombre</th>
+            <th>Stock</th>
+            <th>Precio</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in productos %}
+        <tr {% if p.esta_bajo_stock %}class="table-danger"{% endif %}>
+            <td>
+                {% if p.imagen %}
+                    <img src="{{ p.imagen.url }}" alt="{{ p.nombre }}" class="img-thumbnail" style="height:60px; width:auto;">
+                {% else %}
+                    <span class="text-muted">Sin imagen</span>
+                {% endif %}
+            </td>
+            <td>{{ p.nombre }}</td>
+            <td>{{ p.stock_actual }}</td>
+            <td>${{ p.precio }}</td>
+            <td>
+                <a href="{% url 'editar_producto' p.id %}" class="btn btn-sm btn-warning">Editar</a>
+                <a href="{% url 'eliminar_producto' p.id %}" class="btn btn-sm btn-danger">Eliminar</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

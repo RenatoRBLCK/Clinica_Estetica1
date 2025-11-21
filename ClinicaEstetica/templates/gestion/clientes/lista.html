@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block contenido %}
+<h2>Inventario de Clientes <a href="{% url 'crear_cliente' %}" class="btn btn-success float-end">+ Nuevo</a></h2>
+<table class="table table-striped mt-3">
+    <thead><tr><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Acciones</th></tr></thead>
+    <tbody>
+        {% for c in clientes %}
+        <tr>
+            <td>{{ c.nombre }}</td>
+            <td>{{ c.email }}</td>
+            <td>{{ c.telefono }}</td>
+            <td>
+                <a href="{% url 'editar_cliente' c.id %}" class="btn btn-sm btn-warning">Editar</a>
+                <a href="{% url 'eliminar_cliente' c.id %}" class="btn btn-sm btn-danger">Eliminar</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
