@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block contenido %}
+<h2>Productos Disponibles</h2>
+<table class="table table-striped mt-3">
+    <thead>
+        <tr>
+            <th>Imagen</th>
+            <th>Nombre</th>
+            <th>Stock</th>
+            <th>Precio</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in productos %}
+        <tr {% if p.esta_bajo_stock %}class="table-danger"{% endif %}>
+            <td>
+                {% if p.imagen %}
+                    <img src="{{ p.imagen.url }}" alt="{{ p.nombre }}" class="img-thumbnail" style="height:60px; width:auto;">
+                {% else %}
+                    <span class="text-muted">Sin imagen</span>
+                {% endif %}
+            </td>
+            <td>{{ p.nombre }}</td>
+            <td>{{ p.stock_actual }}</td>
+            <td>${{ p.precio }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import inlineformset_factory
 from django.contrib.auth.forms import UserCreationForm
-from .models import Producto, Cliente, Atencion, DetalleAtencionProducto, Colaborador, Proveedor
+from .models import Producto, Cliente, Atencion, DetalleAtencionProducto, Colaborador, Proveedor, Servicio
 
 # Formulario de Registro de Usuario 
 class CustomUserCreationForm(UserCreationForm):
@@ -37,13 +37,29 @@ class ClienteForm(forms.ModelForm):
 
 # Formulario para LA ATENCIÓN
 class AtencionForm(forms.ModelForm):
+    servicios = forms.ModelMultipleChoiceField(
+        queryset=None,
+        widget=forms.CheckboxSelectMultiple,
+        label="Servicios Realizados"
+    )
+
     class Meta:
         model = Atencion
-        fields = ['cliente', 'servicio']
+        fields = ['cliente', 'servicios']
         widgets = {
             'cliente': forms.Select(attrs={'class': 'form-select'}),
-            'servicio': forms.Select(attrs={'class': 'form-select'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['cliente'].queryset = Cliente.objects.filter(activo=True)
+        self.fields['servicios'].queryset = Servicio.objects.all()
+
+    def clean_cliente(self):
+        cliente = self.cleaned_data.get('cliente')
+        if cliente and not cliente.activo:
+            raise forms.ValidationError("El cliente está dado de baja y no puede recibir una atención.")
+        return cliente
 
 # Formulario para DETALLES 
 class DetalleAtencionForm(forms.ModelForm):
@@ -54,6 +70,17 @@ class DetalleAtencionForm(forms.ModelForm):
             'producto': forms.Select(attrs={'class': 'form-select'}),
             'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Solo productos activos en el desplegable
+        self.fields['producto'].queryset = Producto.objects.filter(activo=True)
+
+    def clean_producto(self):
+        producto = self.cleaned_data.get('producto')
+        if producto and not producto.activo:
+            raise forms.ValidationError("El producto no existe actualmente.")
+        return producto
 
 DetalleAtencionFormSet = inlineformset_factory(
     Atencion, 

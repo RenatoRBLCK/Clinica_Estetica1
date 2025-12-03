@@ -1,0 +1,121 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Productos Dinámicos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .remove-row-btn {
+            color: #dc3545;
+            font-weight: bold;
+            font-size: 1.2em;
+            border: none;
+            background: none;
+        }
+        .add-row-btn {
+            color: #198754;
+            font-weight: bold;
+            font-size: 1.2em;
+            border: none;
+            background: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+    <form>
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="activarProductos" data-bs-toggle="collapse" data-bs-target="#productosCollapse">
+            <label class="form-check-label" for="activarProductos">¿Agregar productos utilizados?</label>
+        </div>
+        <div class="collapse" id="productosCollapse">
+            <div class="card card-body mb-3">
+                <h5>Productos Utilizados</h5>
+                <table class="table" id="productosTable">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Filas dinámicas aquí -->
+                    </tbody>
+                </table>
+                <button type="button" class="add-row-btn" id="addRowBtn" title="Agregar producto">+ Agregar producto</button>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-success">Guardar</button>
+    </form>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Productos de ejemplo, reemplaza con tu queryset en Django si lo necesitas
+    const productos = [
+        {% for p in productos %}
+            { id: "{{ p.id }}", nombre: "{{ p.nombre }}" },
+        {% endfor %}
+    ];
+
+    function crearFilaProducto() {
+        const tr = document.createElement('tr');
+        // Select de productos
+        const tdProducto = document.createElement('td');
+        const select = document.createElement('select');
+        select.className = 'form-select';
+        select.name = 'producto[]';
+        select.required = true;
+        productos.forEach(p => {
+            const option = document.createElement('option');
+            option.value = p.id;
+            option.textContent = p.nombre;
+            select.appendChild(option);
+        });
+        tdProducto.appendChild(select);
+
+        // Input cantidad
+        const tdCantidad = document.createElement('td');
+        const inputCantidad = document.createElement('input');
+        inputCantidad.type = 'number';
+        inputCantidad.min = '1';
+        inputCantidad.className = 'form-control';
+        inputCantidad.name = 'cantidad[]';
+        inputCantidad.required = true;
+        tdCantidad.appendChild(inputCantidad);
+
+        // Botón eliminar
+        const tdAcciones = document.createElement('td');
+        const btnEliminar = document.createElement('button');
+        btnEliminar.type = 'button';
+        btnEliminar.className = 'remove-row-btn';
+        btnEliminar.innerHTML = '&minus;';
+        btnEliminar.title = 'Eliminar producto';
+        btnEliminar.onclick = function() {
+            tr.remove();
+        };
+        tdAcciones.appendChild(btnEliminar);
+
+        tr.appendChild(tdProducto);
+        tr.appendChild(tdCantidad);
+        tr.appendChild(tdAcciones);
+
+        return tr;
+    }
+
+    document.getElementById('addRowBtn').addEventListener('click', function() {
+        const tbody = document.querySelector('#productosTable tbody');
+        tbody.appendChild(crearFilaProducto());
+    });
+
+    // Opcional: agrega una fila por defecto al abrir el collapse
+    document.getElementById('activarProductos').addEventListener('change', function() {
+        const tbody = document.querySelector('#productosTable tbody');
+        if (this.checked && tbody.children.length === 0) {
+            tbody.appendChild(crearFilaProducto());
+        }
+    });
+</script>
+</body>
+</html>

@@ -39,4 +39,8 @@ urlpatterns = [
 
     # PROCESO DE NEGOCIO 
     path('atencion/registrar/', views.registrar_atencion, name='registrar_atencion'),
+
+    # Consulta de productos para estilista
+    path('productos/estilista/', views.productos_estilista, name='productos_estilista'),
+    path('productos/criticos/estilista/', views.productos_criticos_estilista, name='productos_criticos_estilista'),
 ]

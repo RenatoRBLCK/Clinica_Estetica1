@@ -47,8 +47,9 @@ class Atencion(models.Model):
     
     #  El estilista es un usuario del sistema (Colaborador)
     estilista = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Estilista a cargo")
-
-    servicio = models.ForeignKey(Servicio, on_delete=models.PROTECT)
+    
+    # Cambia a ManyToManyField para servicios
+    servicios = models.ManyToManyField(Servicio, verbose_name="Servicios Realizados")
     fecha = models.DateTimeField(auto_now_add=True)
     
     # Productos consumidos en esta atención (Relación Muchos a Muchos)
@@ -78,7 +79,6 @@ class Colaborador(models.Model):
         ('ESTILISTA', 'Estilista'),
         ('RECEPCIONISTA', 'Recepcionista'),
         ('ADMINISTRADOR', 'Administrador'),
-        ('LIMPIEZA', 'Personal de Limpieza'),
     ]
     
     rut = models.CharField(max_length=12, unique=True, verbose_name="RUT")

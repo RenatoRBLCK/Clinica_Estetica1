@@ -18,6 +18,12 @@ def es_recepcionista(user):
         return True
     return False
 
+def es_estilista(user):
+    if user.is_staff: return True
+    if hasattr(user, 'colaborador') and user.colaborador.cargo == 'ESTILISTA':
+        return True
+    return False
+
 # -----------------------------------------------------------------------------
 # VISTAS PÚBLICAS Y AUTENTICACIÓN
 # -----------------------------------------------------------------------------
@@ -26,14 +32,34 @@ def home(request):
     return render(request, 'home.html')
 
 def registro_usuario(request):
+    from django.contrib.auth.models import User
+    from django import forms
+
+    class RegistroColaboradorForm(CustomUserCreationForm):
+        CARGOS = [
+            ('ESTILISTA', 'Estilista'),
+            ('RECEPCIONISTA', 'Recepcionista'),
+        ]
+        cargo = forms.ChoiceField(choices=CARGOS, label="Cargo")
+
     if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
+        form = RegistroColaboradorForm(request.POST)
         if form.is_valid():
-            form.save()
+            user = form.save()
+            cargo = form.cleaned_data['cargo']
+            # Crear el colaborador asociado
+            Colaborador.objects.create(
+                rut="TEMP", # Puedes pedir el rut en el formulario si lo necesitas
+                nombre=user.username,
+                telefono="",
+                cargo=cargo,
+                sueldo=0,
+                usuario=user
+            )
             messages.success(request, 'Registro exitoso. Ahora puedes iniciar sesión.')
             return redirect('login')
     else:
-        form = CustomUserCreationForm()
+        form = RegistroColaboradorForm()
     return render(request, 'registration/registro.html', {'form': form})
 
 def exit_sesion(request):
@@ -262,71 +288,73 @@ def reporte_stock_critico(request):
 
 @login_required
 def registrar_atencion(request):
+    if not es_estilista(request.user):
+        messages.error(request, 'Acceso denegado. Solo estilistas pueden registrar atenciones.')
+        return redirect('home')
     if request.method == 'POST':
         form_atencion = AtencionForm(request.POST)
-        formset_detalles = DetalleAtencionFormSet(request.POST)
+        productos_ids = request.POST.getlist('producto[]')
+        cantidades = request.POST.getlist('cantidad[]')
         
-        if form_atencion.is_valid() and formset_detalles.is_valid():
-            # 1. Guardar la Atención básica PRIMERO
+        if form_atencion.is_valid():
             atencion = form_atencion.save(commit=False)
-            atencion.estilista = request.user 
-            
-            # Lógica Cumpleaños
-            cliente = atencion.cliente # Obtenemos el cliente del formulario
+            atencion.estilista = request.user
+            cliente = form_atencion.cleaned_data['cliente']
             hoy = timezone.now().date()
             if cliente.fecha_nacimiento.month == hoy.month and cliente.fecha_nacimiento.day == hoy.day:
                 atencion.descuento_aplicado = True
                 messages.info(request, f"¡Feliz Cumpleaños a {cliente.nombre}! Se aplicó un 20% de descuento.")
-            
-            # ¡CRUCIAL! Guardamos la atención AQUÍ para que tenga un ID
-            atencion.save() 
-            
-            # 2. Ahora sí procesamos los productos
-            total_servicios = atencion.servicio.precio_mano_obra
+            atencion.save()
+            servicios_seleccionados = form_atencion.cleaned_data['servicios']
+            atencion.servicios.set(servicios_seleccionados)
+            total_servicios = sum([s.precio_mano_obra for s in servicios_seleccionados])
             total_productos = 0
-            
-            # Asignamos la instancia YA GUARDADA al formset
-            formset_detalles.instance = atencion
-            detalles = formset_detalles.save(commit=False)
-            
-            for detalle in detalles:
-                producto = detalle.producto
-                cantidad = detalle.cantidad
-                
-                # Control de Stock
-                if producto.stock_actual >= cantidad:
-                    producto.stock_actual -= cantidad
-                    producto.save()
-                    
-                    if producto.esta_bajo_stock():
-                        messages.warning(request, f"ALERTA CRÍTICA: El producto '{producto.nombre}' quedó bajo el stock mínimo.")
-                else:
-                    messages.error(request, f"ERROR: No hay suficiente stock de {producto.nombre} para completar la atención.")
-                    atencion.delete() # Revertimos si falla el stock
-                    return redirect('registrar_atencion')
-
-                total_productos += (producto.precio * cantidad)
-                detalle.save() # Guardamos cada detalle individualmente
-
-            # 3. Calcular Total Final y Actualizar Atención
+            for prod_id, cant in zip(productos_ids, cantidades):
+                if prod_id and cant:
+                    producto = Producto.objects.get(id=prod_id)
+                    cantidad = int(cant)
+                    if producto.stock_actual >= cantidad:
+                        producto.stock_actual -= cantidad
+                        producto.save()
+                        DetalleAtencionProducto.objects.create(
+                            atencion=atencion,
+                            producto=producto,
+                            cantidad=cantidad
+                        )
+                        total_productos += (producto.precio * cantidad)
+                    else:
+                        messages.error(request, f"ERROR: No hay suficiente stock de {producto.nombre}.")
+                        atencion.delete()
+                        return redirect('registrar_atencion')
             subtotal = total_servicios + total_productos
-            
             if atencion.descuento_aplicado:
                 total_final = int(subtotal * 0.8)
             else:
                 total_final = subtotal
-                
             atencion.total_pagar = total_final
-            atencion.save() # Guardamos de nuevo con el total calculado
-            
+            atencion.save()
             messages.success(request, f"Atención registrada con éxito. Total a pagar: ${total_final}")
             return redirect('home')
-            
     else:
         form_atencion = AtencionForm()
-        formset_detalles = DetalleAtencionFormSet()
-
+        productos = Producto.objects.filter(activo=True)
     return render(request, 'operacion/registrar_atencion.html', {
         'form_atencion': form_atencion,
-        'formset_detalles': formset_detalles
+        'productos': Producto.objects.filter(activo=True)
     })
+
+@login_required
+def productos_estilista(request):
+    if not es_estilista(request.user):
+        messages.error(request, 'Acceso denegado. Solo estilistas pueden consultar productos.')
+        return redirect('home')
+    productos = Producto.objects.filter(activo=True)
+    return render(request, 'gestion/productos/lista_estilista.html', {'productos': productos})
+
+@login_required
+def productos_criticos_estilista(request):
+    if not es_estilista(request.user):
+        messages.error(request, 'Acceso denegado. Solo estilistas pueden consultar productos críticos.')
+        return redirect('home')
+    productos_criticos = [p for p in Producto.objects.filter(activo=True) if p.esta_bajo_stock()]
+    return render(request, 'gestion/productos/lista_criticos_estilista.html', {'productos': productos_criticos})

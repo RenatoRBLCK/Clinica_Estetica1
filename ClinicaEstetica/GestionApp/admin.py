@@ -28,9 +28,13 @@ class ServicioAdmin(admin.ModelAdmin):
 # Configuración de ATENCIÓN (Visitas)
 
 class AtencionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'cliente', 'estilista', 'servicio', 'fecha', 'total_pagar', 'descuento_aplicado')
+    list_display = ('id', 'cliente', 'estilista', 'mostrar_servicios', 'fecha', 'total_pagar', 'descuento_aplicado')
     list_filter = ('fecha', 'estilista', 'descuento_aplicado')
     search_fields = ('cliente__nombre', 'cliente__rut')
+
+    def mostrar_servicios(self, obj):
+        return ", ".join([s.nombre for s in obj.servicios.all()])
+    mostrar_servicios.short_description = 'Servicios'
 
 # Configuración de DETALLE (Productos usados)
 class DetalleAtencionProductoAdmin(admin.ModelAdmin):
