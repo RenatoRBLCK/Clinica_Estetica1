@@ -96,7 +96,12 @@ def crear_producto(request):
     if request.method == 'POST':
         form = ProductoForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
+            producto = form.save(commit=False)
+            # Validación: stock_actual y stock_minimo deben ser > 0
+            if producto.stock_actual <= 0 or producto.stock_minimo <= 0:
+                messages.error(request, 'El stock actual y el stock mínimo deben ser mayores a cero.')
+                return render(request, 'gestion/productos/form.html', {'form': form, 'titulo': 'Crear Producto'})
+            producto.save()
             messages.success(request, 'Producto creado exitosamente.')
             return redirect('listar_productos')
     else:
@@ -110,7 +115,12 @@ def editar_producto(request, id):
     if request.method == 'POST':
         form = ProductoForm(request.POST, request.FILES, instance=producto)
         if form.is_valid():
-            form.save()
+            producto_editado = form.save(commit=False)
+            # Validación: stock_actual y stock_minimo deben ser > 0
+            if producto_editado.stock_actual <= 0 or producto_editado.stock_minimo <= 0:
+                messages.error(request, 'El stock actual y el stock mínimo deben ser mayores a cero.')
+                return render(request, 'gestion/productos/form.html', {'form': form, 'titulo': 'Editar Producto'})
+            producto_editado.save()
             messages.success(request, 'Producto actualizado exitosamente.')
             return redirect('listar_productos')
     else:
