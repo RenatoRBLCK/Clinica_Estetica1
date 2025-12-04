@@ -322,6 +322,12 @@ def registrar_atencion(request):
                             cantidad=cantidad
                         )
                         total_productos += (producto.precio * cantidad)
+                        # NUEVO: Avisar si el producto queda bajo mínimos después de la compra
+                        if producto.esta_bajo_stock():
+                            messages.warning(
+                                request,
+                                f"Advertencia: El producto '{producto.nombre}' ha quedado bajo el stock mínimo después de esta compra."
+                            )
                     else:
                         messages.error(request, f"ERROR: No hay suficiente stock de {producto.nombre}.")
                         atencion.delete()
